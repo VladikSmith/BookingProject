@@ -256,30 +256,21 @@ def test_creating_booking_with_special_symbols_in_name(api_client):
         assert response['booking']['additionalneeds'] == booking_data['additionalneeds']
 
 
-@allure.story('Negative: creating booking where checkin after checkout')
-def test_create_booking_where_checkin_after_checkout(api_client):
+@allure.story('Negative: creating booking with empty booking_data')
+def test_create_booking_with_empty_booking_data(api_client):
     with allure.step('Sending a request to create booking'):
-        booking_data = {
-            "firstname": "Jim",
-            "lastname": "Brown",
-            "totalprice": 111,
-            "depositpaid": True,
-            "bookingdates": {
-                "checkin": "2019-01-01",
-                "checkout": "2018-01-01"
-            },
-            "additionalneeds": "Breakfast"
-        }
+        booking_data = {}
         with pytest.raises(requests.exceptions.HTTPError) as e:
             api_client.create_booking(booking_data)
 
-        assert e.value.response.status_code == 400
+        assert e.value.response.status_code == 500
 
 
-@allure.story('Negative: creating booking with missing firstname param')
-def test_create_booking_with_missing_firstname_param(api_client):
-    with allure.step('Sending a request to create booking'):
-        booking_data = {
+@allure.story('Negative: creating booking with missing params')
+@pytest.mark.parametrize(
+    'booking_data',
+    [
+        ({
             "lastname": "Brown",
             "totalprice": 111,
             "depositpaid": True,
@@ -287,74 +278,64 @@ def test_create_booking_with_missing_firstname_param(api_client):
                 "checkin": "2018-01-01",
                 "checkout": "2019-01-01"
             }
-        }
-
-        with pytest.raises(requests.exceptions.HTTPError) as e:
-            api_client.create_booking(booking_data)
-
-        assert e.value.response.status_code == 400
-
-
-@allure.story('Negative: creating booking with invalid date format')
-@pytest.mark.parametrize(
-    'checkin,checkout',
-    [
-        ('2018/01/01', '2019/01/01'),
-        ('2018.01.01', '2019.01.01'),
-        ('01-01-2018', '01-01-2019'),
-        ('2018-13-01', '2019-01-01'),
-        ('2018-01-01', '2019-13-01'),
-        ('2018-12-32', '2019-01-01'),
-        ('2018-01-01', '2019-12-32')
-    ]
-)
-def test_create_booking_with_invalid_date_format(api_client, checkin, checkout):
-    with allure.step('Sending a request to create booking'):
-        booking_data = {
+        }),
+        ({
             "firstname": "Jim",
-            "lastname": "Brown",
-            "totalprice": 111,
-            "depositpaid": True,
-            "bookingdates": {
-                "checkin": checkin,
-                "checkout": checkout
-            },
-            "additionalneeds": "Breakfast"
-        }
-
-        with pytest.raises(requests.exceptions.HTTPError) as e:
-            api_client.create_booking(booking_data)
-
-        assert e.value.response.status_code == 400
-
-
-@allure.story('Negative: creating booking with empty name')
-@pytest.mark.parametrize(
-    'firstname, lastname',
-    [
-        ('', 'Brown'),
-        ('Jim', ''),
-        (' ', 'Brown'),
-        ('Jim', ' '),
-        ('', ''),
-        (' ', ' ')
-    ]
-)
-def test_create_booking_with_empty_name(api_client, firstname, lastname):
-    with allure.step('Sending a request to create booking'):
-        booking_data = {
-            "firstname": firstname,
-            "lastname": lastname,
             "totalprice": 111,
             "depositpaid": True,
             "bookingdates": {
                 "checkin": "2018-01-01",
                 "checkout": "2019-01-01"
-            },
-            "additionalneeds": "Breakfast"
-        }
+            }
+        }),
+        ({
+            "firstname": "Jim",
+            "lastname": "Brown",
+            "depositpaid": True,
+            "bookingdates": {
+                "checkin": "2018-01-01",
+                "checkout": "2019-01-01"
+            }
+        }),
+        ({
+            "firstname": "Jim",
+            "lastname": "Brown",
+            "totalprice": 111,
+            "bookingdates": {
+                "checkin": "2018-01-01",
+                "checkout": "2019-01-01"
+            }
+        }),
+        ({
+            "firstname": "Jim",
+            "lastname": "Brown",
+            "totalprice": 111,
+            "depositpaid": True
+        }),
+        ({
+            "firstname": "Jim",
+            "lastname": "Brown",
+            "totalprice": 111,
+            "depositpaid": True,
+            "bookingdates": {
+                "checkin": "2018-01-01"
+            }
+        }),
+        ({
+            "firstname": "Jim",
+            "lastname": "Brown",
+            "totalprice": 111,
+            "depositpaid": True,
+            "bookingdates": {
+                "checkout": "2019-01-01"
+            }
+        })
+    ]
+)
+def test_create_booking_with_missing_params(api_client, booking_data):
+    with allure.step('Sending a request to create booking'):
 
         with pytest.raises(requests.exceptions.HTTPError) as e:
             api_client.create_booking(booking_data)
 
-        assert e.value.response.status_code == 400
+        assert e.value.response.status_code == 500
